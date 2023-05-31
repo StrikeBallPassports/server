@@ -31,6 +31,7 @@ python-dotenv==1.0.0
 python-jose==3.3.0
 python-multipart==0.0.6
 python-slugify==8.0.1
+pytz==2023.3
 questionary==1.10.0
 requests==2.28.2
 rsa==4.9

@@ -2,22 +2,30 @@ version: "3.8"
 
 services:
   app:
-    build: .
+    build: ./server
     env_file:
-      - .env
+      - ./server/.env
     volumes:
-      - ./:/opt/project
+      - ./server:/opt/project
     ports:
       - "8000:80"
     depends_on:
       - database
 
+  client:
+    build: ./client
+    ports:
+      - "8080:8080"
+    depends_on:
+      - server
 
   database:
     image: postgres:14-alpine
-    env_file:
-      - .env
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=strikeball_passports
     volumes:
-      - ../data/postgres:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     ports:
       - "15432:5432"

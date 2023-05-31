@@ -1,12 +1,33 @@
+import datetime
 import random, string
+
+import pytz
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from . import schemas, utils, models
 
 
 def get_user(db: Session, username: str) -> models.User:
     return db.query(models.User).filter(models.User.username == username).first()
+
+
+def add_tag_to_user(db: Session, user_id: int, author: models.User, tag: models.BarsaTag):
+    user = db.query(models.Barsa).filter(models.Barsa.id == user_id).first()
+
+    if user is not None:
+        db_tag = models.BarsaTag(
+            value=tag.value,
+            date=datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)),
+            author=author,
+            user=user
+        )
+
+        db.add(db_tag)
+        db.commit()
+
+    return user
 
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
