@@ -13,15 +13,26 @@ def get_user(db: Session, username: str) -> models.User:
     return db.query(models.User).filter(models.User.username == username).first()
 
 
-def add_tag_to_user(db: Session, user_id: int, author: models.User, tag: models.BarsaTag):
+def remove_tag_from_user(db: Session, user_id: int, tag_id: int) -> models.Barsa:
+    user = db.query(models.Barsa).filter(models.Barsa.id == user_id).first()
+
+    if user is not None:
+        db_tag = db.query(models.BarsaTag).filter(models.BarsaTag.id == tag_id).first()
+        if db_tag is not None:
+            db.delete(db_tag)
+            db.commit()
+
+    return user
+
+def add_tag_to_user(db: Session, user_id: int, author: models.User, tag: schemas.TagCreate) -> models.Barsa:
     user = db.query(models.Barsa).filter(models.Barsa.id == user_id).first()
 
     if user is not None:
         db_tag = models.BarsaTag(
             value=tag.value,
             date=datetime.datetime.now(tz=pytz.timezone(settings.TIME_ZONE)),
-            author=author,
-            user=user
+            author_id=author.id,
+            user_id=user_id
         )
 
         db.add(db_tag)

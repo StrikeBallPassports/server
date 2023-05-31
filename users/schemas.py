@@ -23,25 +23,28 @@ class User(UserBase):
 
 class TagBase(BaseModel):
     value: str
-    author_id: int
 
 
 class Tag(TagBase):
-    datetime: datetime
+    id: int
+    author: User
+    date: datetime
+    may_be_deleted: bool = False
 
     class Config:
         orm_mode = True
 
 
 class TagCreate(TagBase):
-    user_id: int
+    pass
 
 
 class BarsaBase(BaseModel):
     name: str
     lastname: str
     passport: str
-    nat: str
+    nationality: str
+    registration: str
 
 
 class Barsa(BarsaBase):

@@ -8,8 +8,9 @@ class Barsa(Base):
     name = Column(String)
     lastname = Column(String)
     passport = Column(String, index=True)
-    nat = Column(String)
+    nationality = Column(String, nullable=True, default=None)
     image = Column(String, nullable=True, default=None)
+    registration = Column(String, nullable=True, default=None)
 
 
 class User(Base):
@@ -27,5 +28,5 @@ class BarsaTag(Base):
     user_id = Column(Integer, ForeignKey(Barsa.id))
     author_id = Column(Integer, ForeignKey(User.id))
 
-    author = relationship(Barsa)
-    user = relationship(User, cascade='all, delete', back_populates='tags')
+    user = relationship(Barsa, backref='tags')
+    author = relationship(User)

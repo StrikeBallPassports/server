@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.params import Body
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -81,6 +82,36 @@ async def get_barsa_users(
 ):
     return crud.get_all_users(db)
 
+@router.post(
+    '/{barsa_id}/mark',
+    response_model=schemas.Barsa,
+    status_code=status.HTTP_200_OK,
+    description='Add mark to user',
+    responses={}
+)
+async def add_mark_to_user(
+        barsa_id: int,
+        tag: schemas.TagCreate,
+        db: Session = Depends(global_dependency.get_db),
+        author=Depends(utils.get_current_common_user)
+):
+    return crud.add_tag_to_user(db, barsa_id, author, tag)
+
+
+@router.delete(
+    '/{barsa_id}/mark',
+    response_model=schemas.Barsa,
+    status_code=status.HTTP_200_OK,
+    description='Remove mark from user',
+    responses={}
+)
+async def add_mark_to_user(
+        barsa_id: int,
+        tag_id: int = Body(embed=True),
+        db: Session = Depends(global_dependency.get_db),
+        _=Depends(utils.get_current_common_user)
+):
+    return crud.remove_tag_from_user(db, barsa_id, tag_id)
 
 @router.get(
     '/user/',
@@ -94,7 +125,7 @@ async def get_barsa_users(
 async def get_barsa_user(
         user_id: int,
         db: Session = Depends(global_dependency.get_db),
-        _=Depends(utils.get_current_common_user)
+        current_user=Depends(utils.get_current_common_user)
 ):
     user = crud.get_barsa(db, user_id)
 
@@ -103,6 +134,11 @@ async def get_barsa_user(
             status_code=404,
             detail=enums.ResponseDetail.ALREADY_EXISTS.value
         )
+
+    # update tags
+    for tag in user.tags:
+        if tag.author.id == current_user.id:
+            tag.may_be_deleted = True
 
     return user
 
@@ -133,7 +169,7 @@ async def create_barsa_user(
 
 
 @router.get(
-    '/user/image/',
+    '/media/{image_path}',
     response_class=FileResponse,
     description='Get user image',
     responses={
@@ -141,44 +177,7 @@ async def create_barsa_user(
     }
 )
 async def get_user_image(
-        user_id: int,
-        db: Session = Depends(global_dependency.get_db),
-        _=Depends(utils.get_current_common_user)
+        image_path: str,
+        _: Session = Depends(global_dependency.get_db)
 ):
-    user = crud.get_barsa(db, user_id)
-
-    if user is None:
-        raise HTTPException(
-            status_code=404,
-            detail=enums.ResponseDetail.ALREADY_EXISTS.value
-        )
-
-    return FileResponse(user.image)
-
-
-@router.get(
-    '/users/image/',
-    description='Get users image',
-    responses={
-        200: responses.responses.get('user_images'),
-        404: responses.error_responses.get(404, {})
-    }
-)
-async def get_user_image(
-        user_ids: list[int],
-        db: Session = Depends(global_dependency.get_db),
-        _=Depends(utils.get_current_common_user)
-):
-    result = {}
-    for user_id in user_ids:
-        user = crud.get_barsa(db, user_id)
-
-        if user is None:
-            raise HTTPException(
-                status_code=404,
-                detail=enums.ResponseDetail.ALREADY_EXISTS.value
-            )
-
-        result[user_id] = FileResponse(user.image)
-
-    return result
+    return FileResponse(f'media/{image_path}')
